@@ -81,7 +81,7 @@ all = [
     "http3",
     "http3-altsvc",
 ]
-tonic = ["dep:tonic"]
+tonic = ["dep:tonic", "dep:axum"]
 
 once_cell_try = ["compio/once_cell_try"]
 nightly = ["once_cell_try", "cyper-core/nightly", "cyper-axum/nightly"]
