@@ -27,6 +27,9 @@ mod http3;
 #[cfg(feature = "http3-altsvc")]
 mod altsvc;
 
+#[cfg(feature = "tonic")]
+mod tonic;
+
 /// The error type used in `compio-http`.
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
@@ -87,6 +90,9 @@ pub enum Error {
     #[cfg(feature = "http3")]
     #[error("QUIC connection error: {0}")]
     QuicConnection(#[from] compio::quic::ConnectionError),
+    #[cfg(feature = "tonic")]
+    #[error("Tonic error: {0}")]
+    Tonic(#[from] ::tonic::Status),
 }
 
 /// The result type used in `compio-http`.

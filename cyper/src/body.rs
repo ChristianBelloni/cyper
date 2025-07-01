@@ -7,12 +7,16 @@ use std::{
 use async_stream::try_stream;
 use compio::{BufResult, bytes::Bytes, fs::File, io::AsyncReadAt};
 use futures_util::{Stream, StreamExt};
+#[cfg(feature = "http3")]
+use h3::proto::coding;
 use hyper::body::{Frame, Incoming, SizeHint};
 use send_wrapper::SendWrapper;
 
 enum BodyInner {
     Bytes(Bytes),
     Stream(Pin<Box<dyn Stream<Item = crate::Result<Bytes>> + Send>>),
+    #[cfg(feature = "tonic")]
+    Tonic(tonic::body::Body),
 }
 
 impl hyper::body::Body for BodyInner {
@@ -32,6 +36,10 @@ impl hyper::body::Body for BodyInner {
                 }
             }
             Self::Stream(s) => s.poll_next_unpin(cx).map(|b| b.map(|b| b.map(Frame::data))),
+            #[cfg(feature = "tonic")]
+            Self::Tonic(body) => std::pin::pin!(body)
+                .poll_frame(cx)
+                .map_err(|error| crate::Error::Tonic(error)),
         }
     }
 
@@ -39,7 +47,23 @@ impl hyper::body::Body for BodyInner {
         match self {
             Self::Bytes(b) => SizeHint::with_exact(b.len() as _),
             Self::Stream(_) => SizeHint::default(),
+            #[cfg(feature = "tonic")]
+            Self::Tonic(t) => t.size_hint(),
         }
+    }
+}
+
+#[cfg(feature = "tonic")]
+impl From<Body> for tonic::body::Body {
+    fn from(value: Body) -> Self {
+        Self::new(value)
+    }
+}
+
+#[cfg(feature = "tonic")]
+impl From<tonic::body::Body> for Body {
+    fn from(value: tonic::body::Body) -> Self {
+        Self(BodyInner::Tonic(value))
     }
 }
 
@@ -47,6 +71,8 @@ impl Debug for BodyInner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Bytes(b) => f.debug_tuple("Bytes").field(b).finish(),
+            #[cfg(feature = "tonic")]
+            Self::Tonic(t) => f.debug_tuple("Tonic").field(t).finish(),
             Self::Stream(_) => f.debug_struct("Stream").finish_non_exhaustive(),
         }
     }
@@ -96,6 +122,8 @@ impl Body {
         match &self.0 {
             BodyInner::Bytes(b) => Some(b),
             BodyInner::Stream(_) => None,
+            #[cfg(feature = "tonic")]
+            BodyInner::Tonic(_) => None,
         }
     }
 }
