@@ -29,6 +29,8 @@ mod altsvc;
 
 #[cfg(feature = "tonic")]
 mod tonic;
+#[cfg(feature = "tonic")]
+pub use tonic::TonicClient;
 
 /// The error type used in `compio-http`.
 #[derive(Debug, thiserror::Error)]
