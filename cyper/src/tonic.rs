@@ -1,12 +1,13 @@
 use std::{future::Future, pin::Pin, task::Poll};
 
+use axum::body::Bytes;
 use tonic::client::GrpcService;
 use url::Url;
 
 use crate::Client;
 
 impl GrpcService<tonic::body::Body> for Client {
-    type ResponseBody = tonic::body::Body;
+    type ResponseBody = Bytes;
 
     type Error = crate::Error;
 
