@@ -1,6 +1,6 @@
 use std::{future::Future, pin::Pin, task::Poll};
 
-use axum::body::Bytes;
+use compio::bytes::Bytes;
 use tonic::client::GrpcService;
 use url::Url;
 

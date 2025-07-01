@@ -43,6 +43,7 @@ thiserror = "2"
 url = "2"
 tonic = { version = "0.13", optional = true }
 
+
 [dev-dependencies]
 compio = { workspace = true, features = ["macros"] }
 cyper-axum = { workspace = true }
@@ -81,7 +82,7 @@ all = [
     "http3",
     "http3-altsvc",
 ]
-tonic = ["dep:tonic", "dep:axum"]
+tonic = ["dep:tonic"]
 
 once_cell_try = ["compio/once_cell_try"]
 nightly = ["once_cell_try", "cyper-core/nightly", "cyper-axum/nightly"]
