@@ -4,9 +4,28 @@ use compio::bytes::Bytes;
 use tonic::client::GrpcService;
 use url::Url;
 
-use crate::Client;
+use crate::{Client, IntoUrl};
 
-impl GrpcService<tonic::body::Body> for Client {
+/// Client usable with [`tonic`] as a [`GrpcService`]
+pub struct TonicClient {
+    url: Url,
+    client: Client,
+}
+
+impl TonicClient {
+    pub fn new(url: impl IntoUrl) -> Self {
+        Self::with_client(url, Client::new())
+    }
+
+    pub fn with_client(url: impl IntoUrl, client: Client) -> Self {
+        Self {
+            url: url.into_url().unwrap(),
+            client,
+        }
+    }
+}
+
+impl GrpcService<tonic::body::Body> for TonicClient {
     type ResponseBody = hyper::body::Incoming;
 
     type Error = crate::Error;
@@ -22,12 +41,11 @@ impl GrpcService<tonic::body::Body> for Client {
     }
 
     fn call(&mut self, request: hyper::Request<tonic::body::Body>) -> Self::Future {
-        let client = self.clone();
+        let client = self.client.clone();
+        let url = self.url.clone();
         Box::pin(async move {
             let (parts, body) = request.into_parts();
-
             let method = parts.method;
-            let url = parts.uri.to_string();
             let headers = parts.headers;
             let version = parts.version;
 
