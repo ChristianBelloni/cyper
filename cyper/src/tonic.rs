@@ -7,7 +7,7 @@ use url::Url;
 use crate::Client;
 
 impl GrpcService<tonic::body::Body> for Client {
-    type ResponseBody = Bytes;
+    type ResponseBody = hyper::body::Incoming;
 
     type Error = crate::Error;
 
